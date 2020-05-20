@@ -174,7 +174,7 @@
   </h1>
   
   <article class="passage-article">
-    <p>** ITMS-90809: Deprecated API Usage - New apps that use UIWebView are no longer accepted. Instead, use WKWebView for improved security and reliability.<br><img src alt="ITMS-90809"></p>
+    <p>** ITMS-90809: Deprecated API Usage - New apps that use UIWebView are no longer accepted. Instead, use WKWebView for improved security and reliability.<br><img src="/images/itms-90809_error.jpeg" alt="ITMS-90809"></p>
 <p>*** 年前提交版本的时候，就提示了这个错误，不过那时是警告，而现在是错误。收到错误时没留意，在准备设置app审核的版本时，发现没有版本提交记录，才渐渐注意这个问题。<br><br><br>这个错误是指项目里使用的废弃的 API(UIWebview)。处理这个问题可以查找项目的 API 使用情况，使用命令:<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> <span class="comment">#项目根目录</span></span><br><span class="line">grep -r UIWebView .</span><br></pre></td></tr></table></figure></p>
 <p>然后把对应的模块的 UIWebview 相关代码更新，把第三方的类库更新一下，就可以了。</p>
   </article>
