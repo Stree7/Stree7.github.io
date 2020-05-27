@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  <meta name="author" content="Gary Leung">
+  
+  
+  <title>Objective-C代码混淆实践（阉割版） | Gary Leung「」</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="学习,笔记,随笔,php,">
+  
+
+  
+  <meta name="description" content="Pages of Gary Leung">
+
+  
+
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.1/dist/av-min.js" async></script>
+  
+
+  
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+  
+
+  
+    <script src="//unpkg.com/valine/dist/Valine.min.js" async></script>
+  
+
+  
+
+  <script>
+  // theme-ad's config script
+  // it can be used in every script
+  
+  window.AD_CONFIG = {
+    leancloud: {"appid":"Qo5E1CwQXHAHX5xddEEgFUFO-gzGzoHsz","appkey":"u8vQ4XmXQfy4KX6m4HoH5SWX","comment":true,"count":true},
+    welcome: {"enable":false,"interval":30},
+    start_time: "2018-02-10",
+    passwords: ["efe07af7441da2b69c4a41e42e73be4db47f66010a56900788a458354a7373ec", ],
+    is_post: true,
+    lock: false,
+    author: "Gary Leung",
+    share: {"twitter":false,"facebook":false,"weibo":true,"qq":true,"wechat":true},
+    mathjax: true,
+    page_type: "",
+    root: "/"
+  };
+</script>
+
+  <script src="/vendor/sha256.min.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/index.js"></script>
+<script src="/vendor/qrcode.min.js"></script>
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="//netdna.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+  <link rel="stylesheet" href="/css/index.css">
+<link rel="stylesheet" href="/styles/components/highlight/highlight.css">
+
+  
+</head>
+  <body>
+    <header class="site-header">
+  <div class="site-header-brand">
+    
+      <span class="site-header-brand-title">
+        <a href="/">Gary Leung</a>
+      </span>
+    
+    
+      <span class="site-header-brand-motto"> | 懒癌晚期病房</span>
+    
+  </div>
+  <div class="site-header-right">
+    <nav class="site-header-navigation">
+      
+        <a href="/" target="_self">首页</a>
+      
+        <a href="/archives/" target="_self">归档</a>
+      
+        <a href="/tags/" target="_self">标签</a>
+      
+        <a href="/categories/" target="_self">分类</a>
+      
+        <a href="/about/" target="_self">关于</a>
+      
+    </nav>
+    <div class="site-header-btn">
+      
+        <a href="https://github.com/Stree7/" target="_blank" id="site-github">
+          <i class="fa fa-github-alt"></i>
+        </a>
+      
+      <a href="javascript:void(0);" id="site-search">
+        <i class="fa fa-search"></i>
+      </a>
+      <a href="javascript:void(0);" id="site-nav-btn">
+        <i class="fa fa-ellipsis-v"></i>
+      </a>
+    </div>
+  </div>
+</header>
+<nav class="table-content" id="site-nav">
+  <div class="table-content-title">
+    <span>导航</span>
+  </div>
+  <div class="table-content-main">
+    <ol class="toc">
+      
+        <li class="toc-item">
+          <a href="/" target="_self">
+            首页
+          </a>
+        </li>
+      
+        <li class="toc-item">
+          <a href="/archives/" target="_self">
+            归档
+          </a>
+        </li>
+      
+        <li class="toc-item">
+          <a href="/tags/" target="_self">
+            标签
+          </a>
+        </li>
+      
+        <li class="toc-item">
+          <a href="/categories/" target="_self">
+            分类
+          </a>
+        </li>
+      
+        <li class="toc-item">
+          <a href="/about/" target="_self">
+            关于
+          </a>
+        </li>
+      
+    </ol>
+  </div>
+</nav>
+<div id="site-process"></div>
+    <main>
+      
+  <div class="passage">
+  <div class="passage-meta">
+    <span>
+      <i class="fa fa-calendar"></i>2020-05-27
+    </span>
+    
+      <span>
+        | <a href="/categories/学习/"><i class="fa fa-bookmark"></i>学习</a>
+      </span>
+    
+    
+      <span>
+        | <i class="fa fa-unlock-alt"></i>UNLOCK
+      </span>
+    
+  </div>
+  <h1 class="passage-title">
+    Objective-C代码混淆实践（阉割版）
+  </h1>
+  
+  <article class="passage-article">
+    <p>[toc]</p>
+<p>###开篇<br>2019年末伊始，公司就开始卖saas系统 <code>(AI**购)</code>。要求相同代码的应用上架到应用市场。对于 iOS ，这种需求似乎是灾难性的。因为这种需求意未着类似马甲包app的上架工作，落到了我的身上。众所周知，iOS 的审核机制是非常严格的。犹其是最近几年，iOS的审核更是在不断加强马甲包（即是代码相似度极高、UI 交互、功能几乎一样的 app）的打击力度。</p>
+<p>虽然这半年来也很幸运地上架了3、4个app，但是好景不长，后续上传审核的 app 皆被苹果以类似马甲包的理由拒绝了上架。其间除了代码混淆之外，尝试了界面更改，app 图标更换，更换苹果帐号上架，但也是遭遇相同的结局。所以最终背水一战，把最后希望投向了代码混淆。</p>
+<p>万幸，之前被拒的app在代码混淆之后，通过了苹果的审核机制，并成功上架。</p>
+<p><strong>特此记录。</strong></p>
+<p>###何为阉割版</p>
+<p>所谓之阉割，也就是有所缺失。这段代码混淆功能，是站在巨人的肩膀上实现的，所以功能上的流程就比较精简。这一功能省略了对原代码混淆元素的搜刮以及对工程文件编辑的功能，而主要目的是为了扩展代码混淆（把混淆的代码元素再混淆，以此来替换原混淆流程）。这样能让代码混淆更加有复用性、更加本地化和接地气。</p>
+<h3 id="流程图"><a href="#流程图" class="headerlink" title="流程图"></a>流程图</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">st=&gt;start: Start</span><br><span class="line">e=&gt;end</span><br><span class="line">op=&gt;operation: 创建新数组</span><br><span class="line">cond=&gt;condition: 不重复</span><br><span class="line">cond1=&gt;condition: 与原镜像单词不同</span><br><span class="line"></span><br><span class="line">st-&gt;op-&gt;cond-&gt;cond1</span><br><span class="line">cond(no)-&gt;op</span><br><span class="line">cond(yes)-&gt;cond1</span><br><span class="line">cond1(no)-&gt;op</span><br><span class="line">cond1(yes)-&gt;e</span><br></pre></td></tr></table></figure>
+<h3 id="功能点"><a href="#功能点" class="headerlink" title="功能点"></a>功能点</h3><p><strong>步1：词汇</strong><br>    单词组词</p>
+<ul>
+<li>小驼峰式, </li>
+<li>2~4个单词为一组</li>
+<li>建立新单词反重复数组</li>
+</ul>
+<p><strong>步2：替换</strong><br>     用单词替换原单词</p>
+<ul>
+<li>检查原单词是否与所组单词相同，同则回步1重建单词</li>
+<li>检查新单词是否在反重复数组内，是则回步1重建单词</li>
+<li>检查原单词是否有’set’、’_’前缀，替换时保留 </li>
+<li>替换</li>
+<li>将用于替换的新单词加入反重复数组</li>
+<li>步1，直到没有可替换的原单词</li>
+</ul>
+<h3 id="主要代码"><a href="#主要代码" class="headerlink" title="主要代码"></a>主要代码</h3><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">import random</span><br><span class="line"></span><br><span class="line"><span class="comment"># 文件数据大约是这样的:</span></span><br><span class="line"><span class="string">''</span><span class="string">'</span></span><br><span class="line"><span class="string">#ifndef co_codeObfuscation_h</span></span><br><span class="line"><span class="string">#define co_codeObfuscation_h</span></span><br><span class="line"><span class="string">//confuse string at 2020年 4月24日 星期五 17时10分23秒 CST</span></span><br><span class="line"><span class="string">#ifndef ZSNotificationConsts</span></span><br><span class="line"><span class="string">  #define ZSNotificationConsts TripinnatedSupraorbitalRidge</span></span><br><span class="line"><span class="string">#endif</span></span><br><span class="line"><span class="string">#ifndef bindThume</span></span><br><span class="line"><span class="string">  #define bindThume letteredHooligan</span></span><br><span class="line"><span class="string">#endif</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="string">#endif</span></span><br><span class="line"><span class="string">'</span><span class="string">''</span></span><br><span class="line"><span class="comment">#建立新单词反重复数组</span></span><br><span class="line">customWords = []</span><br><span class="line"></span><br><span class="line"><span class="comment">#打开代码混淆头文件</span></span><br><span class="line">file = open(<span class="string">'codeObfuscation.h'</span>, mode=<span class="string">'r+'</span>)</span><br><span class="line"><span class="comment">#行</span></span><br><span class="line">lines = file.read().split(<span class="string">'\n'</span>)</span><br><span class="line">file.close</span><br><span class="line"></span><br><span class="line"><span class="comment">#行数为4的"  #define ZSNotificationConsts TripinnatedSupraorbitalRidge"是替换对象，每隔3行也是要替换对象</span></span><br><span class="line"><span class="comment">#所以可以利用 while循环来完成批量替换，循环条件为 len(lines) &gt; index += 3</span></span><br><span class="line">index = <span class="number">4</span></span><br><span class="line">numOfLines = len(lines)</span><br><span class="line"><span class="keyword">print</span>(<span class="string">'行数有：%d'</span>%(numOfLines))</span><br><span class="line"><span class="keyword">while</span> numOfLines &gt; index: </span><br><span class="line"></span><br><span class="line">    <span class="comment">#当前行的文本分割 </span></span><br><span class="line">    <span class="comment">#"  #define ZSNotificationConsts TripinnatedSupraorbitalRidge"</span></span><br><span class="line">    <span class="comment">#  =&gt; </span></span><br><span class="line">    <span class="comment"># ['', '', '#define', 'ZSNotificationConsts', 'TripinnatedSupraorbitalRidge']</span></span><br><span class="line">    comphonents = lines[index].split(<span class="string">' '</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="comment">#分割数据个数不对则跳过</span></span><br><span class="line">    <span class="keyword">if</span> len(comphonents) &lt; <span class="number">3</span>:</span><br><span class="line">        <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">#取define的真身</span></span><br><span class="line">    trueName = comphonents[<span class="number">-2</span>]</span><br><span class="line">    <span class="comment">#取deine的旧分身</span></span><br><span class="line">    oldFalseName = comphonents[<span class="number">-1</span>]</span><br><span class="line">    <span class="comment">#替换旧分身</span></span><br><span class="line">    comphonents[<span class="number">-1</span>] = makeNewWord(trueName, oldFalseName, customWords)</span><br><span class="line">    <span class="comment">#替换define预编译代码</span></span><br><span class="line">    lines[index] = <span class="string">' '</span>.join(comphonents)</span><br><span class="line">    index += <span class="number">3</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">#打开代码混淆头文件</span></span><br><span class="line">file = open(<span class="string">'codeObfuscation.h'</span>, mode=<span class="string">'w+'</span>)</span><br><span class="line">file.write(<span class="string">'\n'</span>.join(lines))</span><br><span class="line"></span><br><span class="line"><span class="keyword">print</span>(<span class="string">'更新完成...\n%s'</span>%(lines))</span><br></pre></td></tr></table></figure>
+<h3 id="相关函数"><a href="#相关函数" class="headerlink" title="相关函数"></a>相关函数</h3><p><strong>获取单词序列</strong><br><figure class="highlight livecodeserver"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#建词方法</span></span><br><span class="line">def findWordsToBuild() :</span><br><span class="line">    <span class="comment">#读取所有组词用的英文单词</span></span><br><span class="line">    wordsFile = <span class="built_in">open</span>(<span class="string">'words'</span>, mode=<span class="string">'r'</span>)</span><br><span class="line">    <span class="keyword">words</span> = wordsFile.<span class="built_in">read</span>().<span class="built_in">split</span>(<span class="string">'\n'</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment">#所有英文单词的数量</span></span><br><span class="line">    numOfWords = <span class="built_in">len</span>(<span class="keyword">words</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment">#2~4个英文单词组一个词</span></span><br><span class="line">    buildWordsNum = <span class="built_in">random</span>.randint(<span class="number">1</span>, <span class="number">3</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment">#建立造词数组</span></span><br><span class="line">    wordsToBuild = []</span><br><span class="line"></span><br><span class="line">    <span class="comment">#造词前用while循环获取造词数组的元素</span></span><br><span class="line">    <span class="keyword">while</span> <span class="built_in">len</span>(wordsToBuild) &lt;= buildWordsNum:</span><br><span class="line">        <span class="comment">#获取英文数组随机下标</span></span><br><span class="line">        index = <span class="built_in">random</span>.randint(<span class="number">0</span>, numOfWords - <span class="number">1</span>)</span><br><span class="line">        <span class="comment">#通过下标获取随机英文单词</span></span><br><span class="line">        wordPreview = <span class="keyword">words</span>[index]</span><br><span class="line">        <span class="comment">#若单词不重复则加入到造词数组中</span></span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span>(wordPreview <span class="keyword">in</span> wordsToBuild): </span><br><span class="line">            wordsToBuild.append(wordPreview)</span><br><span class="line"></span><br><span class="line">    <span class="comment">#关闭文件</span></span><br><span class="line">    wordsFile.<span class="built_in">close</span>()</span><br><span class="line">    <span class="comment">#返回建词数组</span></span><br><span class="line">    <span class="literal">return</span> wordsToBuild</span><br></pre></td></tr></table></figure></p>
+<p><strong>造无冗余新词</strong><br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#组出不重复单词</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">makeNewWord</span><span class="params">(trueName:str, oldFalseName:str, customWords:list)</span> :</span></span><br><span class="line">    <span class="keyword">while</span> <span class="number">1</span>:</span><br><span class="line">        <span class="comment">#获取造词数组</span></span><br><span class="line">        wordsToBuild = findWordsToBuild()</span><br><span class="line">        </span><br><span class="line">        <span class="comment">#若真身有set前缀，分身就得加上</span></span><br><span class="line">        <span class="keyword">if</span> <span class="string">'set'</span> <span class="keyword">in</span> trueName:</span><br><span class="line">            wordsToBuild.insert(<span class="number">0</span>, <span class="string">'set'</span>)</span><br><span class="line">        <span class="keyword">elif</span> <span class="string">'_'</span> <span class="keyword">in</span> trueName: </span><br><span class="line">            wordsToBuild.insert(<span class="number">0</span>, <span class="string">'_'</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment">#建词</span></span><br><span class="line">        indexOfWord = <span class="number">0</span></span><br><span class="line">        wordsToBuildNum = len(wordsToBuild)</span><br><span class="line">        <span class="keyword">while</span> indexOfWord &lt; wordsToBuildNum:</span><br><span class="line">            <span class="keyword">if</span>(indexOfWord &gt; <span class="number">1</span> <span class="keyword">or</span> ( indexOfWord == <span class="number">1</span> <span class="keyword">and</span> (<span class="string">'_'</span> <span class="keyword">not</span> <span class="keyword">in</span> wordsToBuild))):</span><br><span class="line">                wordsToBuild[indexOfWord] = wordsToBuild[indexOfWord].capitalize()</span><br><span class="line">            indexOfWord += <span class="number">1</span> </span><br><span class="line">        </span><br><span class="line">        finalWord = <span class="string">''</span>.join(wordsToBuild)</span><br><span class="line">        <span class="keyword">if</span> ((finalWord <span class="keyword">not</span> <span class="keyword">in</span> customWords) <span class="keyword">and</span> (oldFalseName != finalWord)):</span><br><span class="line">            <span class="keyword">return</span> finalWord</span><br></pre></td></tr></table></figure></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p><strong>总的来说</strong>，这段代码虽然比较简单，可能没有用到 php 的高级用法，所以我要加强 php的学习。另外我想说的是，这段代码对笔者的实用性太高了，与自动化打包合在一起简单是完美。当然这段代码只是初版，还需多多优化提升。</p>
+<h3 id="待完善"><a href="#待完善" class="headerlink" title="待完善"></a>待完善</h3><ul>
+<li style="list-style: none"><input type="checkbox"> 搜索代码，并修改程文件（<code>xcodeproj的应用</code>）</li>
+<li style="list-style: none"><input type="checkbox"> 生成单词模块不健全，存在死循环风险</li>
+</ul>
+<h3 id="敬上"><a href="#敬上" class="headerlink" title="敬上"></a>敬上</h3><p><a href="https://github.com/kaich/codeobscure" target="_blank" rel="noopener">OC工程代码自动混淆工具</a></p>
+
+  </article>
+  <aside class="table-content" id="site-toc">
+  <div class="table-content-title">
+    <i class="fa fa-arrow-right fa-lg" id="site-toc-hide-btn"></i>
+    <span>目录</span>
+  </div>
+  <div class="table-content-main">
+    <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#流程图"><span class="toc-text">流程图</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#功能点"><span class="toc-text">功能点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#主要代码"><span class="toc-text">主要代码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#相关函数"><span class="toc-text">相关函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#总结"><span class="toc-text">总结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#待完善"><span class="toc-text">待完善</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#敬上"><span class="toc-text">敬上</span></a></li></ol>
+  </div>
+</aside>
+  
+  
+    <div class="passage-tags">
+     
+      <a href="/tags/随笔/"><i class="fa fa-tags"></i>随笔</a>
+     
+      <a href="/tags/php/"><i class="fa fa-tags"></i>php</a>
+    
+    </div>
+  
+</div>
+
+    </main>
+    
+      
+<div class="site-comment-contanier" data-plateform="leancloud">
+  
+    <p id="site-comment-info">
+      <i class="fa fa-spinner fa-spin"></i> 评论加载中
+    </p>
+    <div id="site-comment"></div>
+  
+</div>
+    
+    <div class="site-footer-wrapper">
+  <footer class="site-footer">
+    
+<!--     <div class="site-footer-info">
+      <i class="fa fa-clock-o"></i> 本站已稳定运行<span id="site-time"></span>
+    </div> -->
+<!--     
+      <div class="site-footer-info">
+        <i class="fa fa-paw"></i> 您是本站第 <span id="site-count"></span> 位访客
+      </div>
+     -->
+    
+    <div class="site-footer-info">
+      <i class="fa fa-copyright"></i> 
+      2019 <a href="https://github.com/dongyuanxin/theme-ad/" target="_blank">Theme-AD</a>.
+      Modified by <a href="https://Stree7.github.io/" target="_blank">Gary Leung</a>.
+      All rights reserved.
+    </div>
+  </footer>
+</div>
+    <div id="site-layer" style="display:none;">
+  <div class="site-layer-content">
+    <div class="site-layer-header">
+      <span class="site-layer-header-title" id="site-layer-title"></span>
+      <i class="fa fa-close" id="site-layer-close"></i>
+    </div>
+    <div class="site-layer-body" id="site-layer-container">
+      <div class="site-layer-input" id="site-layer-search" style="display: none;">
+        <input type="text">
+        <i class="fa fa-search"></i>
+      </div>
+      
+        <div class="site-layer-reward" id="site-layer-reward" style="display: none;">
+          
+            <div>
+              <img src="/images/weixin_donate.png" alt="WeChat">
+              
+                <p>WeChat</p>
+              
+            </div>
+          
+            <div>
+              <img src="/images/ali_donate.png" alt="AliPay">
+              
+                <p>AliPay</p>
+              
+            </div>
+          
+        </div>
+      
+      <div id="site-layer-welcome" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+    
+
+<div class="bottom-bar">
+  <div class="bottom-bar-left">
+    <a href="javascript:void(0);" data-enable="false">
+      <i class="fa fa-arrow-left"></i>
+    </a>
+    <a href="/passages/hexo的基本使用/" data-enable="true">
+      <i class="fa fa-arrow-right"></i>
+    </a>
+  </div>
+  <div class="bottom-bar-right">
+    <a href="javascript:void(0);" data-enable="true" id="site-toc-show-btn">
+      <i class="fa fa-bars"></i>
+    </a>
+    
+      <a href="#site-comment" data-enable="true">
+        <i class="fa fa-commenting"></i>
+      </a>
+    
+    <a href="javascript:void(0);" id="site-toggle-share-btn">
+      <i class="fa fa-share-alt"></i>
+    </a>
+    
+      <a href="javascript:void(0);" id="site-reward">
+        <i class="fa fa-thumbs-up"></i>
+      </a>
+    
+    <a href="javascript:void(0);" id="back-top-btn">
+      <i class="fa fa-chevron-up"></i>
+    </a>
+  </div>
+</div>
+    <div id="share-btn">
+  
+  
+  
+    <a id="share-btn-weibo" href="javascript:void(0);" target="_blank">
+      <i class="fa fa-weibo"></i>
+    </a>
+  
+  
+    <a id="share-btn-qq" href="javascript:void(0);" target="_blank">
+      <i class="fa fa-qq"></i>
+    </a>
+  
+  
+    <a id="share-btn-wechat" href="javascript:void(0);" target="_blank">
+      <i class="fa fa-wechat"></i>
+    </a>
+  
+</div>
+    
+
+
+
+
+
+    
+  </body>
+</html>
